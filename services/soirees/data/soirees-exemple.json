@@ -1,0 +1,35 @@
+[
+  {
+    "id": "1",
+    "clientId": "1",
+    "date": "2025-12-15",
+    "lieu": "Salle des Fêtes de Lyon",
+    "nombreInvites": 120,
+    "playlistId": "1",
+    "budget": 1500,
+    "statut": "confirmée",
+    "createdAt": "2025-12-01T09:30:00.000Z"
+  },
+  {
+    "id": "2",
+    "clientId": "2",
+    "date": "2025-12-20",
+    "lieu": "Restaurant Le Gourmet - Paris",
+    "nombreInvites": 50,
+    "playlistId": "3",
+    "budget": 800,
+    "statut": "confirmée",
+    "createdAt": "2025-12-01T10:00:00.000Z"
+  },
+  {
+    "id": "3",
+    "clientId": "3",
+    "date": "2025-12-31",
+    "lieu": "Club Midnight - Marseille",
+    "nombreInvites": 200,
+    "playlistId": "2",
+    "budget": 2500,
+    "statut": "confirmée",
+    "createdAt": "2025-12-01T10:30:00.000Z"
+  }
+]

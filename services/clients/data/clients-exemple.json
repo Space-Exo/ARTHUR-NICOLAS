@@ -1,0 +1,23 @@
+[
+  {
+    "id": "1",
+    "nom": "Sophie Martin",
+    "email": "sophie.martin@email.com",
+    "telephone": "06 12 34 56 78",
+    "createdAt": "2025-12-01T09:00:00.000Z"
+  },
+  {
+    "id": "2",
+    "nom": "Thomas Dubois",
+    "email": "thomas.dubois@email.com",
+    "telephone": "06 98 76 54 32",
+    "createdAt": "2025-12-01T09:30:00.000Z"
+  },
+  {
+    "id": "3",
+    "nom": "Marie Lefebvre",
+    "email": "marie.lefebvre@email.com",
+    "telephone": "07 11 22 33 44",
+    "createdAt": "2025-12-01T10:00:00.000Z"
+  }
+]

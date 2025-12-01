@@ -1,0 +1,30 @@
+[
+  {
+    "id": "1",
+    "nom": "Rock & Pop",
+    "stylesMusicaux": ["Rock", "Pop", "Indie"],
+    "description": "Playlist pour soirées énergiques avec hits rock et pop",
+    "createdAt": "2025-12-01T10:00:00.000Z"
+  },
+  {
+    "id": "2",
+    "nom": "Electro Party",
+    "stylesMusicaux": ["House", "Techno", "EDM"],
+    "description": "Musique électronique pour faire danser toute la nuit",
+    "createdAt": "2025-12-01T10:05:00.000Z"
+  },
+  {
+    "id": "3",
+    "nom": "Classiques Français",
+    "stylesMusicaux": ["Chanson Française", "Variété"],
+    "description": "Les grands classiques de la chanson française",
+    "createdAt": "2025-12-01T10:10:00.000Z"
+  },
+  {
+    "id": "4",
+    "nom": "Hip-Hop & R&B",
+    "stylesMusicaux": ["Hip-Hop", "R&B", "Rap"],
+    "description": "Les meilleurs titres hip-hop et R&B",
+    "createdAt": "2025-12-01T10:15:00.000Z"
+  }
+]

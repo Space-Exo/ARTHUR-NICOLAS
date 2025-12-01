@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  service-clients:
+    build: ./services/clients
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./services/clients/data:/app/data
+    networks:
+      - dj-marcel-network
+
+  service-playlists:
+    build: ./services/playlists
+    ports:
+      - "3002:3002"
+    volumes:
+      - ./services/playlists/data:/app/data
+    networks:
+      - dj-marcel-network
+
+  service-soirees:
+    build: ./services/soirees
+    ports:
+      - "3003:3003"
+    volumes:
+      - ./services/soirees/data:/app/data
+    networks:
+      - dj-marcel-network
+
+  frontend:
+    build: ./front
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_CLIENTS_API=http://localhost:3001
+      - NEXT_PUBLIC_PLAYLISTS_API=http://localhost:3002
+      - NEXT_PUBLIC_SOIREES_API=http://localhost:3003
+    depends_on:
+      - service-clients
+      - service-playlists
+      - service-soirees
+    networks:
+      - dj-marcel-network
+
+networks:
+  dj-marcel-network:
+    driver: bridge
