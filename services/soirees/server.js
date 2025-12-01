@@ -3,16 +3,29 @@ import cors from 'cors';
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import Consul from 'consul';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = 3003;
+const PORT = process.env.SERVICE_PORT || 3003;
+const SERVICE_NAME = process.env.SERVICE_NAME || 'service-soirees';
 const DATA_FILE = path.join(__dirname, 'data', 'soirees.json');
+
+// Configuration C
+const consul = new Consul({
+      host: process.env.CONSUL_HOST || 'consul',
+      port: parseInt(process.env.CONSUL_PORT || '8500'),
+});
 
 app.use(cors());
 app.use(express.json());
+
+// Health check endpoint pour Consul
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'healthy', service: SERVICE_NAME });
+});
 
 // Fonction pour lire les soirées
 async function readSoirees() {
@@ -117,6 +130,53 @@ app.delete('/api/soirees/:id', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
+// Enregistrement dans Consul
+async function registerService() {
+  const serviceId = `${SERVICE_NAME}-${PORT}`;
+  const registration = {
+    id: serviceId,
+    name: SERVICE_NAME,
+    address: SERVICE_NAME,
+    port: parseInt(PORT),
+    check: {
+      http: `http://${SERVICE_NAME}:${PORT}/health`,
+      interval: '10s',
+      timeout: '5s',
+    },
+    tags: ['api', 'microservice', 'dj-marcel'],
+  };
+
+  try {
+    await consul.agent.service.register(registration);
+    console.log(`✅ Service ${SERVICE_NAME} enregistré dans Consul`);
+  } catch (error) {
+    console.error(`❌ Erreur lors de l'enregistrement dans Consul:`, error.message);
+  }
+}
+
+// Désenregistrement de Consul à l'arrêt
+async function deregisterService() {
+  const serviceId = `${SERVICE_NAME}-${PORT}`;
+  try {
+    await consul.agent.service.deregister(serviceId);
+    console.log(`✅ Service ${SERVICE_NAME} désenregistré de Consul`);
+  } catch (error) {
+    console.error(`❌ Erreur lors du désenregistrement:`, error.message);
+  }
+}
+
+// Gestion de l'arrêt propre
+process.on('SIGINT', async () => {
+  await deregisterService();
+  process.exit(0);
+});
+
+process.on('SIGTERM', async () => {
+  await deregisterService();
+  process.exit(0);
+});
+
+app.listen(PORT, async () => {
   console.log(`Service Soirées démarré sur le port ${PORT}`);
+  await registerService();
 });

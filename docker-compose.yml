@@ -1,14 +1,39 @@
 version: '3.8'
 
 services:
+  consul:
+    image: consul:1.15.4
+    container_name: consul-server
+    ports:
+      - "8500:8500"
+      - "8600:8600/udp"
+    command: agent -server -ui -bootstrap-expect=1 -client=0.0.0.0
+    networks:
+      - dj-marcel-network
+    healthcheck:
+      test: ["CMD", "consul", "members"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   service-clients:
     build: ./services/clients
     ports:
       - "3001:3001"
     volumes:
       - ./services/clients/data:/app/data
+    environment:
+      - CONSUL_HOST=consul
+      - CONSUL_PORT=8500
+      - SERVICE_NAME=service-clients
+      - SERVICE_PORT=3001
+    depends_on:
+      consul:
+        condition: service_healthy
     networks:
       - dj-marcel-network
+
+# un service qui va servire a bien des choses 
 
   service-playlists:
     build: ./services/playlists
@@ -16,6 +41,14 @@ services:
       - "3002:3002"
     volumes:
       - ./services/playlists/data:/app/data
+    environment:
+      - CONSUL_HOST=consul
+      - CONSUL_PORT=8500
+      - SERVICE_NAME=service-playlists
+      - SERVICE_PORT=3002
+    depends_on:
+      consul:
+        condition: service_healthy
     networks:
       - dj-marcel-network
 
@@ -25,6 +58,14 @@ services:
       - "3003:3003"
     volumes:
       - ./services/soirees/data:/app/data
+    environment:
+      - CONSUL_HOST=consul
+      - CONSUL_PORT=8500
+      - SERVICE_NAME=service-soirees
+      - SERVICE_PORT=3003
+    depends_on:
+      consul:
+        condition: service_healthy
     networks:
       - dj-marcel-network
 
@@ -33,13 +74,17 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - NEXT_PUBLIC_CLIENTS_API=http://localhost:3001
-      - NEXT_PUBLIC_PLAYLISTS_API=http://localhost:3002
-      - NEXT_PUBLIC_SOIREES_API=http://localhost:3003
+      - CONSUL_HOST=consul
+      - CONSUL_PORT=8500
     depends_on:
-      - service-clients
-      - service-playlists
-      - service-soirees
+      consul:
+        condition: service_healthy
+      service-clients:
+        condition: service_started
+      service-playlists:
+        condition: service_started
+      service-soirees:
+        condition: service_started
     networks:
       - dj-marcel-network
 

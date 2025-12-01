@@ -3,9 +3,8 @@ import Consul from 'consul';
 class ConsulService {
   constructor() {
     this.consul = new Consul({
-      host: process.env.CONSUL_HOST || 'localhost',
-      port: process.env.CONSUL_PORT || '8500',
-      promisify: true,
+      host: process.env.CONSUL_HOST || 'consul',
+      port: parseInt(process.env.CONSUL_PORT || '8500'),
     });
   }
 

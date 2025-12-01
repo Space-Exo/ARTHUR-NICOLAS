@@ -1,4 +1,4 @@
-import API_BASE_URLS from './config';
+import API_BASE_URLS, { getServiceUrls } from './config';
 
 export interface Playlist {
   id: string;
@@ -11,19 +11,22 @@ export interface Playlist {
 
 export const playlistsApi = {
   getAll: async (): Promise<Playlist[]> => {
-    const res = await fetch(`${API_BASE_URLS.playlists}/api/playlists`, { cache: 'no-store' });
+    const urls = await getServiceUrls();
+    const res = await fetch(`${urls.playlists}/api/playlists`, { cache: 'no-store' });
     if (!res.ok) throw new Error('Erreur lors de la récupération des playlists');
     return res.json();
   },
 
   getById: async (id: string): Promise<Playlist> => {
-    const res = await fetch(`${API_BASE_URLS.playlists}/api/playlists/${id}`, { cache: 'no-store' });
+    const urls = await getServiceUrls();
+    const res = await fetch(`${urls.playlists}/api/playlists/${id}`, { cache: 'no-store' });
     if (!res.ok) throw new Error('Playlist non trouvée');
     return res.json();
   },
 
   create: async (playlist: Omit<Playlist, 'id'>): Promise<Playlist> => {
-    const res = await fetch(`${API_BASE_URLS.playlists}/api/playlists`, {
+    const urls = await getServiceUrls();
+    const res = await fetch(`${urls.playlists}/api/playlists`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(playlist),
@@ -33,7 +36,8 @@ export const playlistsApi = {
   },
 
   update: async (id: string, playlist: Partial<Playlist>): Promise<Playlist> => {
-    const res = await fetch(`${API_BASE_URLS.playlists}/api/playlists/${id}`, {
+    const urls = await getServiceUrls();
+    const res = await fetch(`${urls.playlists}/api/playlists/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(playlist),
@@ -43,7 +47,8 @@ export const playlistsApi = {
   },
 
   delete: async (id: string): Promise<void> => {
-    const res = await fetch(`${API_BASE_URLS.playlists}/api/playlists/${id}`, {
+    const urls = await getServiceUrls();
+    const res = await fetch(`${urls.playlists}/api/playlists/${id}`, {
       method: 'DELETE',
     });
     if (!res.ok) throw new Error('Erreur lors de la suppression de la playlist');

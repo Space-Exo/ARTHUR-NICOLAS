@@ -1,4 +1,4 @@
-import API_BASE_URLS from './config';
+import API_BASE_URLS, { getServiceUrls } from './config';
 
 export interface Soiree {
   id: string;
@@ -15,19 +15,22 @@ export interface Soiree {
 
 export const soireesApi = {
   getAll: async (): Promise<Soiree[]> => {
-    const res = await fetch(`${API_BASE_URLS.soirees}/api/soirees`, { cache: 'no-store' });
+    const urls = await getServiceUrls();
+    const res = await fetch(`${urls.soirees}/api/soirees`, { cache: 'no-store' });
     if (!res.ok) throw new Error('Erreur lors de la récupération des soirées');
     return res.json();
   },
 
   getById: async (id: string): Promise<Soiree> => {
-    const res = await fetch(`${API_BASE_URLS.soirees}/api/soirees/${id}`, { cache: 'no-store' });
+    const urls = await getServiceUrls();
+    const res = await fetch(`${urls.soirees}/api/soirees/${id}`, { cache: 'no-store' });
     if (!res.ok) throw new Error('Soirée non trouvée');
     return res.json();
   },
 
   create: async (soiree: Omit<Soiree, 'id'>): Promise<Soiree> => {
-    const res = await fetch(`${API_BASE_URLS.soirees}/api/soirees`, {
+    const urls = await getServiceUrls();
+    const res = await fetch(`${urls.soirees}/api/soirees`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(soiree),
@@ -37,7 +40,8 @@ export const soireesApi = {
   },
 
   update: async (id: string, soiree: Partial<Soiree>): Promise<Soiree> => {
-    const res = await fetch(`${API_BASE_URLS.soirees}/api/soirees/${id}`, {
+    const urls = await getServiceUrls();
+    const res = await fetch(`${urls.soirees}/api/soirees/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(soiree),
@@ -47,7 +51,8 @@ export const soireesApi = {
   },
 
   delete: async (id: string): Promise<void> => {
-    const res = await fetch(`${API_BASE_URLS.soirees}/api/soirees/${id}`, {
+    const urls = await getServiceUrls();
+    const res = await fetch(`${urls.soirees}/api/soirees/${id}`, {
       method: 'DELETE',
     });
     if (!res.ok) throw new Error('Erreur lors de la suppression de la soirée');
