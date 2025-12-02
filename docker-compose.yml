@@ -55,7 +55,10 @@ services:
   service-playlists:
     build: ./services/playlists
     ports:
-      - "3002:3002"
+      - target: 3002        # port dans le conteneur
+        published: 3002        # port dynamique sur le host
+        protocol: tcp
+        mode: ingress
     volumes:
       - ./services/playlists/data:/app/data
     environment:
@@ -74,6 +77,8 @@ services:
         condition: service_healthy
     networks:
       - dj-marcel-network
+    deploy:
+      replicas: 200
 
   service-soirees:
     build: ./services/soirees
