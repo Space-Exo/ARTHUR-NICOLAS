@@ -24,8 +24,9 @@ export default function Home() {
         </div>
 
         <div className="mt-12 text-sm opacity-80">
-          <p>Architecture microservices :</p>
-          <p>Service Clients • Service Playlists • Service Soirées</p>
+          <p>Architecture microservices avec event-driven :</p>
+          <p>Consul • RabbitMQ • Service Clients • Service Playlists • Service Soirées</p>
+          <p className="mt-2">🎵 Génération automatique de playlists via API externe</p>
         </div>
       </div>
     </div>

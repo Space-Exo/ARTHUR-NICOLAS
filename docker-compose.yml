@@ -16,6 +16,23 @@ services:
       timeout: 5s
       retries: 5
 
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq-server
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=admin123
+    networks:
+      - dj-marcel-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   service-clients:
     build: ./services/clients
     ports:
@@ -46,8 +63,14 @@ services:
       - CONSUL_PORT=8500
       - SERVICE_NAME=service-playlists
       - SERVICE_PORT=3002
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=admin
+      - RABBITMQ_PASS=admin123
     depends_on:
       consul:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     networks:
       - dj-marcel-network
@@ -63,8 +86,14 @@ services:
       - CONSUL_PORT=8500
       - SERVICE_NAME=service-soirees
       - SERVICE_PORT=3003
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=admin
+      - RABBITMQ_PASS=admin123
     depends_on:
       consul:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     networks:
       - dj-marcel-network
@@ -73,6 +102,8 @@ services:
     build: ./front
     ports:
       - "3000:3000"
+    volumes:
+      - ./front:/app
     environment:
       - CONSUL_HOST=consul
       - CONSUL_PORT=8500

@@ -5,6 +5,8 @@ export interface Playlist {
   nom: string;
   stylesMusicaux: string[];
   description: string;
+  tracks?: string[];
+  soireeId?: string;
   createdAt?: string;
   updatedAt?: string;
 }

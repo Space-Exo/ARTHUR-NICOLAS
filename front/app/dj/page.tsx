@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { soireesApi, Soiree } from '@/lib/api/soirees';
-import { playlistsApi, Playlist } from '@/lib/api/playlists';
-import { clientsApi, Client } from '@/lib/api/clients';
+import { Soiree } from '@/lib/api/soirees';
+import { Playlist } from '@/lib/api/playlists';
+import { Client } from '@/lib/api/clients';
+import { createPlaylist, deletePlaylist, getAllClient, getAllPlaylist, getAllSoiree, updateSoiree } from '@/lib/api/api';
 
 export default function DJPage() {
     const [soirees, setSoirees] = useState<Soiree[]>([]);
@@ -29,11 +30,9 @@ export default function DJPage() {
     const loadData = async () => {
         try {
             setLoading(true);
-            const [soireesData, playlistsData, clientsData] = await Promise.all([
-                soireesApi.getAll(),
-                playlistsApi.getAll(),
-                clientsApi.getAll(),
-            ]);
+            const clientsData: Client[] = await getAllClient();
+            const soireesData: Soiree[] = await getAllSoiree();
+            const playlistsData: Playlist[] = await getAllPlaylist();
             setSoirees(soireesData);
             setPlaylists(playlistsData);
             setClients(clientsData);
@@ -49,7 +48,7 @@ export default function DJPage() {
         if (!selectedSoiree || !selectedPlaylist) return;
 
         try {
-            await soireesApi.update(selectedSoiree, { playlistId: selectedPlaylist });
+            await updateSoiree(selectedSoiree, { playlistId: selectedPlaylist });
             await loadData();
             setSelectedSoiree(null);
             setSelectedPlaylist('');
@@ -68,7 +67,7 @@ export default function DJPage() {
                 .map(s => s.trim())
                 .filter(s => s.length > 0);
 
-            await playlistsApi.create({
+            await createPlaylist({
                 nom: newPlaylistData.nom,
                 description: newPlaylistData.description,
                 stylesMusicaux,
@@ -88,7 +87,7 @@ export default function DJPage() {
         if (!confirm('Êtes-vous sûr de vouloir supprimer cette playlist ?')) return;
 
         try {
-            await playlistsApi.delete(id);
+            await deletePlaylist(id);
             await loadData();
             alert('Playlist supprimée avec succès !');
         } catch (err) {
@@ -270,7 +269,19 @@ export default function DJPage() {
                                                 {playlist.stylesMusicaux.join(', ')}
                                             </p>
                                             {playlist.description && (
-                                                <p className="text-xs text-gray-500">{playlist.description}</p>
+                                                <p className="text-xs text-gray-500 mb-2">{playlist.description}</p>
+                                            )}
+                                            {playlist.tracks && playlist.tracks.length > 0 && (
+                                                <div className="mt-2 pt-2 border-t">
+                                                    <p className="text-xs font-semibold text-purple-600 mb-1">
+                                                        Morceaux ({playlist.tracks.length}):
+                                                    </p>
+                                                    <ul className="text-xs text-gray-500 ml-3 list-disc space-y-0.5">
+                                                        {playlist.tracks.map((track, idx) => (
+                                                            <li key={idx}>{track}</li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
                                             )}
                                         </div>
                                     ))

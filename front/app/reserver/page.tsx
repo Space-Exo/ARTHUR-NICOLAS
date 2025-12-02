@@ -1,14 +1,18 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { clientsApi, Client } from '@/lib/api/clients';
-import { soireesApi, Soiree } from '@/lib/api/soirees';
+import { Client } from '@/lib/api/clients';
+import { Soiree } from '@/lib/api/soirees';
+import { Playlist } from '@/lib/api/playlists';
+import { createClient, createSoiree, getAllClient, getAllSoiree, getAllPlaylist } from '@/lib/api/api';
 
 export default function ReserverPage() {
     const [clients, setClients] = useState<Client[]>([]);
     const [soirees, setSoirees] = useState<Soiree[]>([]);
+    const [playlists, setPlaylists] = useState<Playlist[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
     const [formData, setFormData] = useState({
         clientNom: '',
@@ -18,6 +22,7 @@ export default function ReserverPage() {
         lieu: '',
         nombreInvites: '',
         budget: '',
+        styleMusical: 'disco',
     });
 
     const [selectedClientId, setSelectedClientId] = useState<string>('new');
@@ -29,12 +34,12 @@ export default function ReserverPage() {
     const loadData = async () => {
         try {
             setLoading(true);
-            const [clientsData, soireesData] = await Promise.all([
-                clientsApi.getAll(),
-                soireesApi.getAll(),
-            ]);
+            const clientsData: Client[] = await getAllClient();
+            const soireesData: Soiree[] = await getAllSoiree();
+            const playlistsData: Playlist[] = await getAllPlaylist();
             setClients(clientsData);
             setSoirees(soireesData);
+            setPlaylists(playlistsData);
         } catch (err) {
             setError('Erreur lors du chargement des données');
             console.error(err);
@@ -52,7 +57,7 @@ export default function ReserverPage() {
 
             // Créer un nouveau client si nécessaire
             if (selectedClientId === 'new') {
-                const newClient = await clientsApi.create({
+                const newClient = await createClient({
                     nom: formData.clientNom,
                     email: formData.clientEmail,
                     telephone: formData.clientTelephone,
@@ -61,7 +66,7 @@ export default function ReserverPage() {
             }
 
             // Créer la réservation
-            await soireesApi.create({
+            await createSoiree({
                 clientId,
                 date: formData.date,
                 lieu: formData.lieu,
@@ -69,6 +74,7 @@ export default function ReserverPage() {
                 budget: parseFloat(formData.budget),
                 playlistId: null,
                 statut: 'confirmée',
+                styleMusical: formData.styleMusical,
             });
 
             // Réinitialiser le formulaire et recharger les données
@@ -80,10 +86,12 @@ export default function ReserverPage() {
                 lieu: '',
                 nombreInvites: '',
                 budget: '',
+                styleMusical: 'disco',
             });
             setSelectedClientId('new');
             await loadData();
-            alert('Réservation créée avec succès !');
+            setSuccessMessage('Réservation créée avec succès ! La playlist sera générée automatiquement dans quelques instants.');
+            setTimeout(() => setSuccessMessage(null), 5000);
         } catch (err) {
             setError('Erreur lors de la création de la réservation');
             console.error(err);
@@ -108,6 +116,12 @@ export default function ReserverPage() {
                 {error && (
                     <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
                         {error}
+                    </div>
+                )}
+
+                {successMessage && (
+                    <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+                        {successMessage}
                     </div>
                 )}
 
@@ -215,6 +229,28 @@ export default function ReserverPage() {
                                 />
                             </div>
 
+                            <div>
+                                <label className="block text-sm font-medium mb-1 text-black">Style musical</label>
+                                <select
+                                    value={formData.styleMusical}
+                                    onChange={(e) => setFormData({ ...formData, styleMusical: e.target.value })}
+                                    className="w-full p-2 border rounded text-black"
+                                    required
+                                >
+                                    <option value="disco">Disco</option>
+                                    <option value="rock">Rock</option>
+                                    <option value="jazz">Jazz</option>
+                                    <option value="pop">Pop</option>
+                                    <option value="electronic">Electronic</option>
+                                    <option value="hip-hop">Hip-Hop</option>
+                                    <option value="classical">Classical</option>
+                                    <option value="reggae">Reggae</option>
+                                </select>
+                                <p className="text-xs text-gray-500 mt-1">
+                                    🎵 Une playlist sera générée automatiquement pour ce style
+                                </p>
+                            </div>
+
                             <button
                                 type="submit"
                                 className="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition"
@@ -237,6 +273,7 @@ export default function ReserverPage() {
                                     }
                                 }).map((soiree) => {
                                     const client = clients.find((c) => c.id === soiree.clientId);
+                                    const associatedPlaylist = playlists.find((p) => p.soireeId === soiree.id);
                                     return (
                                         <div key={soiree.id} className="border rounded p-4">
                                             <div className="flex justify-between items-start mb-2">
@@ -257,6 +294,36 @@ export default function ReserverPage() {
                                             <p className="text-sm text-gray-600">
                                                 <strong>Budget:</strong> {soiree.budget}€
                                             </p>
+                                            {soiree.styleMusical && (
+                                                <p className="text-sm text-gray-600">
+                                                    <strong>Style:</strong> {soiree.styleMusical}
+                                                </p>
+                                            )}
+                                            {associatedPlaylist ? (
+                                                <div className="mt-3 pt-3 border-t">
+                                                    <p className="text-sm font-semibold text-green-600 mb-1">
+                                                        ✓ Playlist générée: {associatedPlaylist.nom}
+                                                    </p>
+                                                    {associatedPlaylist.tracks && associatedPlaylist.tracks.length > 0 && (
+                                                        <ul className="text-xs text-gray-500 ml-4 list-disc">
+                                                            {associatedPlaylist.tracks.slice(0, 3).map((track, idx) => (
+                                                                <li key={idx}>{track}</li>
+                                                            ))}
+                                                            {associatedPlaylist.tracks.length > 3 && (
+                                                                <li className="italic">
+                                                                    +{associatedPlaylist.tracks.length - 3} autres morceaux
+                                                                </li>
+                                                            )}
+                                                        </ul>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <div className="mt-3 pt-3 border-t">
+                                                    <p className="text-sm text-yellow-600">
+                                                        ⏳ Playlist en cours de génération...
+                                                    </p>
+                                                </div>
+                                            )}
                                         </div>
                                     );
                                 })

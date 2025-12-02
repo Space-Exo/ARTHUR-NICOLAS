@@ -10,4 +10,5 @@ COPY . .
 
 EXPOSE 3002
 
-CMD ["node", "server.js"]
+# Script pour lancer à la fois le serveur et le worker
+CMD ["sh", "-c", "node server.js & node worker.js"]

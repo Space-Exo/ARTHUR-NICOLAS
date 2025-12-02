@@ -4,6 +4,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import Consul from 'consul';
+import amqp from 'amqplib';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -13,11 +14,57 @@ const PORT = process.env.SERVICE_PORT || 3003;
 const SERVICE_NAME = process.env.SERVICE_NAME || 'service-soirees';
 const DATA_FILE = path.join(__dirname, 'data', 'soirees.json');
 
-// Configuration C
+// Configuration Consul
 const consul = new Consul({
       host: process.env.CONSUL_HOST || 'consul',
       port: parseInt(process.env.CONSUL_PORT || '8500'),
 });
+
+// Configuration RabbitMQ
+const RABBITMQ_URL = `amqp://${process.env.RABBITMQ_USER || 'admin'}:${process.env.RABBITMQ_PASS || 'admin123'}@${process.env.RABBITMQ_HOST || 'rabbitmq'}:${process.env.RABBITMQ_PORT || '5672'}`;
+const QUEUE_NAME = 'playlist_generation_queue';
+
+let rabbitChannel = null;
+
+// Connexion à RabbitMQ
+async function connectRabbitMQ() {
+  try {
+    const connection = await amqp.connect(RABBITMQ_URL);
+    rabbitChannel = await connection.createChannel();
+    await rabbitChannel.assertQueue(QUEUE_NAME, { durable: true });
+    console.log('✅ Connecté à RabbitMQ');
+  } catch (error) {
+    console.error('❌ Erreur connexion RabbitMQ:', error.message);
+    setTimeout(connectRabbitMQ, 5000); // Retry après 5s
+  }
+}
+
+// Publier un message dans la queue
+async function publishPlaylistRequest(soireeData) {
+  if (!rabbitChannel) {
+    console.warn('⚠️ RabbitMQ non disponible, message non envoyé');
+    return;
+  }
+
+  try {
+    const message = {
+      soireeId: soireeData.id,
+      clientId: soireeData.clientId,
+      style: soireeData.styleMusical || 'disco',
+      timestamp: new Date().toISOString()
+    };
+
+    rabbitChannel.sendToQueue(
+      QUEUE_NAME,
+      Buffer.from(JSON.stringify(message)),
+      { persistent: true }
+    );
+
+    console.log(`📨 Message publié pour soirée ${soireeData.id}`);
+  } catch (error) {
+    console.error('❌ Erreur publication message:', error.message);
+  }
+}
 
 app.use(cors());
 app.use(express.json());
@@ -79,10 +126,15 @@ app.post('/api/soirees', async (req, res) => {
       playlistId: req.body.playlistId || null,
       budget: req.body.budget || 0,
       statut: req.body.statut || 'confirmée',
+      styleMusical: req.body.styleMusical || 'disco',
       createdAt: new Date().toISOString()
     };
     soirees.push(newSoiree);
     await writeSoirees(soirees);
+
+    // Publier un message pour générer une playlist
+    await publishPlaylistRequest(newSoiree);
+
     res.status(201).json(newSoiree);
   } catch (error) {
     res.status(500).json({ error: 'Erreur lors de la création de la soirée' });
@@ -179,4 +231,5 @@ process.on('SIGTERM', async () => {
 app.listen(PORT, async () => {
   console.log(`Service Soirées démarré sur le port ${PORT}`);
   await registerService();
+  await connectRabbitMQ();
 });

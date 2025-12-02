@@ -9,6 +9,7 @@ export interface Soiree {
   playlistId: string | null;
   budget: number;
   statut: string;
+  styleMusical?: string;
   createdAt?: string;
   updatedAt?: string;
 }
